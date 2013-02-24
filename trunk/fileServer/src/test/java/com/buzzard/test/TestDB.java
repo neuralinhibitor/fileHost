@@ -246,6 +246,12 @@ public class TestDB extends TestCase
             file.getName(), 
             0, 
             fileToDataMap.get(file));
+        
+        DataTable.persistData(
+            userID, 
+            file.getName(), 
+            0, 
+            fileToDataMap.get(file));
       }
     }
     

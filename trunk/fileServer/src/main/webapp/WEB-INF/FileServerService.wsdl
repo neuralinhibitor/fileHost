@@ -30,9 +30,14 @@
     
       <xsd:complexType name="FileChunk">
       	<xsd:sequence>
-      		<xsd:element name="offset" type="xsd:long" maxOccurs="1" minOccurs="1"></xsd:element>
+                    <xsd:element name="fileName" type="xsd:string" maxOccurs="1" minOccurs="1"></xsd:element>
+                    <xsd:element name="offset" type="xsd:long" maxOccurs="1"
+      			minOccurs="1">
+      		</xsd:element>
 
-      		<xsd:element name="length" type="xsd:int" maxOccurs="1" minOccurs="1"></xsd:element>
+      		<xsd:element name="data" type="xsd:base64Binary"
+      			maxOccurs="1" minOccurs="1">
+      		</xsd:element>
       	</xsd:sequence>
       </xsd:complexType>
     
@@ -57,7 +62,68 @@
       		<xsd:element name="userPassword" type="xsd:string" maxOccurs="1" minOccurs="1"></xsd:element>
       	</xsd:sequence>
       </xsd:complexType>
-    </xsd:schema>
+      <xsd:element name="addUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="credentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="addUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="wasSuccess" type="xsd:boolean" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="updateUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="oldCredentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      			<xsd:element name="newCredentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="updateUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="wasSuccess" type="xsd:boolean" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="uploadFileChunk">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+
+      			<xsd:element name="credentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1"
+      				minOccurs="1">
+      			</xsd:element>
+      			<xsd:element name="chunk" type="tns:FileChunk" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="uploadFileChunkResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="wasSuccess" type="xsd:boolean" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+		
+		</xsd:schema>
   </wsdl:types>
   <wsdl:message name="getFileListRequest">
   	<wsdl:part name="parameters" element="tns:getFileList"></wsdl:part>
@@ -65,16 +131,47 @@
   <wsdl:message name="getFileListResponse">
   	<wsdl:part name="parameters" element="tns:getFileListResponse"></wsdl:part>
   </wsdl:message>
+  <wsdl:message name="addUserRequest">
+  	<wsdl:part name="parameters" element="tns:addUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addUserResponse">
+  	<wsdl:part name="parameters" element="tns:addUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="updateUserRequest">
+  	<wsdl:part name="parameters" element="tns:updateUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="updateUserResponse">
+  	<wsdl:part name="parameters" element="tns:updateUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="uploadFileChunkRequest">
+  	<wsdl:part name="parameters" element="tns:uploadFileChunk"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="uploadFileChunkResponse">
+  	<wsdl:part name="parameters" element="tns:uploadFileChunkResponse"></wsdl:part>
+  </wsdl:message>
   <wsdl:portType name="FileServer">
     <wsdl:operation name="getFileList">
     	<wsdl:input message="tns:getFileListRequest"></wsdl:input>
     	<wsdl:output message="tns:getFileListResponse"></wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="addUser">
+    	<wsdl:input message="tns:addUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:addUserResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="updateUser">
+    	<wsdl:input message="tns:updateUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:updateUserResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="uploadFileChunk">
+    	<wsdl:input message="tns:uploadFileChunkRequest"></wsdl:input>
+    	<wsdl:output message="tns:uploadFileChunkResponse"></wsdl:output>
+    </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="FileServerSOAP" type="tns:FileServer">
     <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    
     <wsdl:operation name="getFileList">
-      <soap:operation soapAction="http://www.buzzard.com/FileServer/NewOperation"/>
+      <soap:operation soapAction=""/>
       <wsdl:input>
         <soap:body use="literal"/>
       </wsdl:input>
@@ -82,6 +179,37 @@
         <soap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
+    
+    <wsdl:operation name="addUser">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="updateUser">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="uploadFileChunk">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
   </wsdl:binding>
   <wsdl:service name="FileServerService">
     <wsdl:port binding="tns:FileServerSOAP" name="FileServerSOAP">

@@ -48,7 +48,9 @@ public class DataTable extends DBObject
     
     while(table != null)
     {
-      table = table.getNextTableEntry(dataOffset,fileData);
+      table = table.getNextTableEntry(
+          dataOffset,
+          fileData);
       
       if(table != null)
       {
@@ -59,9 +61,9 @@ public class DataTable extends DBObject
     return nameTableEntry.getFileID();
   }
   
-  public static byte[] getChunk(
+  private static DataTable getTableEntry(
       final long fileID, 
-      final long offset
+      final long dataOffset
       )
   {
     DataTable row = new DataTable();
@@ -70,7 +72,18 @@ public class DataTable extends DBObject
         (DataTable)
         row.getObject(
             Restrictions.eq("fileID",fileID),
-            Restrictions.eq("offset",offset));
+            Restrictions.eq("offset",dataOffset));
+    
+    return object;
+  }
+  
+  public static byte[] getChunk(
+      final long fileID, 
+      final long offset
+      )
+  {
+    DataTable object = 
+        getTableEntry(fileID,offset);
     
     return object.getData();
   }
@@ -105,6 +118,7 @@ public class DataTable extends DBObject
   {
     long chunkOffset = this.getChunkOffset();
     long chunkLength = data.length - chunkOffset;
+    long offset = baseDataOffset+chunkOffset;
     
     verifyLong(chunkOffset);
     verifyLong(chunkLength);
@@ -128,11 +142,20 @@ public class DataTable extends DBObject
         0, 
         (int)chunkLength);
     
-    DataTable entry = new DataTable();
+    DataTable entry = getTableEntry(this.getFileID(),offset);
+    if(entry != null)
+    {
+      entry.delete();
+    }
+    else
+    {
+      entry = new DataTable();
+    }
+    
     entry.setData(chunk);
     entry.setFileID(this.getFileID());
     entry.setLength(chunkLength);
-    entry.setOffset(baseDataOffset+chunkOffset);
+    entry.setOffset(offset);
     entry.setChunkOffset(chunkOffset + chunkLength);
     
     return entry;
