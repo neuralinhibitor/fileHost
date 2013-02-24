@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="com.buzzard.db.models.DataTable" table="datatable">
+		
+		<id column="id" name="id" type="long">
+			<generator class="increment"/>
+		</id>
+		
+		<property column="file_id" name="fileID" type="long"/>
+		<property column="data_byte_offset" name="offset" type="long"/>
+		<property column="data_length_bytes" name="length" type="long"/>
+		<property column="data_bytes" name="data" type="binary"/>
+		
+	</class>
+</hibernate-mapping>

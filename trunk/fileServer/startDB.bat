@@ -1,0 +1,1 @@
+%POSTGRES_HOME%/bin/pg_ctl -o "-F -p 5433" -D %POSTGRES_HOME%/data start 
