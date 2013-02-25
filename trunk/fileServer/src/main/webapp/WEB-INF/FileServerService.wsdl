@@ -123,6 +123,72 @@
       	</xsd:complexType>
       </xsd:element>
 		
+      <xsd:element name="deleteFile">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="credentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1"
+      				minOccurs="1">
+      			</xsd:element>
+      			<xsd:element name="fileName" type="xsd:string" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="deleteFileResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="wasSuccess" type="xsd:boolean"
+      				maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="deleteUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="credentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1"
+      				minOccurs="1">
+      			</xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="deleteUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="wasSuccess" type="xsd:boolean" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="downloadFileChunk">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="credentials"
+      				type="tns:AuthenticationCredentials" maxOccurs="1"
+      				minOccurs="1">
+      			</xsd:element>
+      			<xsd:element name="fileName" type="xsd:string"
+      				maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      			<xsd:element name="offset" type="xsd:long"
+      				maxOccurs="1" minOccurs="1">
+      			</xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="downloadFileChunkResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="chunk" type="tns:FileChunk" maxOccurs="1" minOccurs="1"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
 		</xsd:schema>
   </wsdl:types>
   <wsdl:message name="getFileListRequest">
@@ -149,6 +215,24 @@
   <wsdl:message name="uploadFileChunkResponse">
   	<wsdl:part name="parameters" element="tns:uploadFileChunkResponse"></wsdl:part>
   </wsdl:message>
+  <wsdl:message name="deleteFileRequest">
+  	<wsdl:part name="parameters" element="tns:deleteFile"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="deleteFileResponse">
+  	<wsdl:part name="parameters" element="tns:deleteFileResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="deleteUserRequest">
+  	<wsdl:part name="parameters" element="tns:deleteUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="deleteUserResponse">
+  	<wsdl:part name="parameters" element="tns:deleteUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="downloadFileChunkRequest">
+  	<wsdl:part name="parameters" element="tns:downloadFileChunk"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="downloadFileChunkResponse">
+  	<wsdl:part name="parameters" element="tns:downloadFileChunkResponse"></wsdl:part>
+  </wsdl:message>
   <wsdl:portType name="FileServer">
     <wsdl:operation name="getFileList">
     	<wsdl:input message="tns:getFileListRequest"></wsdl:input>
@@ -165,6 +249,18 @@
     <wsdl:operation name="uploadFileChunk">
     	<wsdl:input message="tns:uploadFileChunkRequest"></wsdl:input>
     	<wsdl:output message="tns:uploadFileChunkResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="deleteFile">
+    	<wsdl:input message="tns:deleteFileRequest"></wsdl:input>
+    	<wsdl:output message="tns:deleteFileResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="deleteUser">
+    	<wsdl:input message="tns:deleteUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:deleteUserResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="downloadFileChunk">
+    	<wsdl:input message="tns:downloadFileChunkRequest"></wsdl:input>
+    	<wsdl:output message="tns:downloadFileChunkResponse"></wsdl:output>
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="FileServerSOAP" type="tns:FileServer">
@@ -201,6 +297,36 @@
     </wsdl:operation>
     
     <wsdl:operation name="uploadFileChunk">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="deleteFile">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="deleteUser">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    
+    <wsdl:operation name="downloadFileChunk">
       <soap:operation soapAction=""/>
       <wsdl:input>
         <soap:body use="literal"/>

@@ -69,7 +69,10 @@ public class FileNameTable extends DBObject
     }
   }
   
-  public static void deleteFileData(long userID, String fileName)
+  public static void deleteFileData(
+      long userID, 
+      String fileName
+      )
   {
     FileNameTable table = new FileNameTable();
     
