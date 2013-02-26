@@ -87,7 +87,7 @@ public class FileNameTable extends DBObject
     }
   }
   
-  public static FileNameTable addFileNameTableEntryIfMissing(
+  public static synchronized FileNameTable addFileNameTableEntryIfMissing(
       long userID,
       String fileName
       )

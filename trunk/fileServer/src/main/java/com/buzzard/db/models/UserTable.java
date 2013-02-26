@@ -88,7 +88,7 @@ public class UserTable extends DBObject
     object.save();
   }
   
-  public static long addUser(
+  public static synchronized long addUser(
       String userName, 
       String password
       )

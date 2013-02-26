@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 
 import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 
+import org.apache.axiom.attachments.ByteArrayDataSource;
 import org.apache.commons.io.FileUtils;
 
 import com.buzzard.db.models.UserTable;
@@ -239,6 +241,208 @@ public class TestServiceInterface extends TestCase
     deleteUsers();
   }
   
+  private void uploadChunks(
+      final FileChunk[] chunks,
+      final int numThreads,
+      final String userName, 
+      final String password
+      ) throws InterruptedException
+  {
+    assertTrue(chunks.length > 1);
+    
+    CountDownLatch latch = 
+        new CountDownLatch(numThreads);
+    
+    int chunksPerThread = 
+        (int)Math.ceil((1.0d*chunks.length)/(1.0d*numThreads));
+    
+    int chunkCount = 0;
+    
+    List<Thread> threads = new ArrayList<Thread>();
+    for(int i=0; i<numThreads; i++)
+    {
+      List<FileChunk> threadChunks = new ArrayList<FileChunk>();
+      for(int j=0; j<chunksPerThread; j++)
+      {
+        int index = i*chunksPerThread+j;
+        
+        if(index < chunks.length)
+        {
+          threadChunks.add(chunks[index]);
+          chunkCount++;
+        }
+      }
+      
+      Uploader uploader = 
+          new Uploader(service,userName,password,threadChunks,latch);
+      
+      Thread thread = new Thread(uploader);
+      threads.add(thread);
+    }
+    
+    assertTrue(threads.size() == numThreads);
+    assertTrue(chunkCount == chunks.length);
+    
+    for(Thread thread:threads)
+    {
+      thread.start();
+    }
+    
+    latch.await();
+  }
+  
+  private static class Uploader implements Runnable
+  {
+    private final CountDownLatch latch;
+    private final FileServiceImplementation service;
+    private final List<FileChunk> chunks;
+    private final String username;
+    private final String password;
+    
+    public Uploader(
+        FileServiceImplementation service,
+        String username, 
+        String password, 
+        List<FileChunk> chunks,
+        CountDownLatch latch
+        )
+    {
+      this.username = username;
+      this.password = password;
+      this.chunks = chunks;
+      this.service = service;
+      this.latch = latch;
+    }
+
+    @Override
+    public void run()
+    {
+      for(FileChunk chunk:chunks)
+      {
+        UploadFileChunk arg = new UploadFileChunk();
+        arg.setCredentials(getCredentials(username,password));
+        arg.setChunk(chunk);
+        
+        service.uploadFileChunk(arg);
+      }
+      
+      latch.countDown();
+    }
+    
+  }
+  
+  public void testMultithreadedUpload() throws IOException, InterruptedException
+  {
+    long sequentialTime = uploadFileMultithreaded(1);
+    
+    int[] threadCounts = new int[]{2,4,8,16,32,64};
+    long[] threadTimes = new long[threadCounts.length];
+    
+    assertEquals(threadCounts.length,threadTimes.length);
+    
+    for(int i=0;i<threadCounts.length;i++)
+    {
+      int numThreads = threadCounts[i];
+      long time = uploadFileMultithreaded(numThreads);
+      threadTimes[i] = time;
+    }
+    
+    System.out.printf("speedups:\n");
+    for(int i=0;i<threadCounts.length;i++)
+    {
+      System.out.printf(
+          "with %d threads, s=%1.4f\n",
+          threadCounts[i],
+          (1.0*sequentialTime)/(1.0*threadTimes[i]));
+    }
+  }
+  
+  private long uploadFileMultithreaded(
+      int numThreads
+      ) throws IOException, InterruptedException
+  {
+    long time = 0l;
+    
+    addUsers();
+    
+    for(String userName:userToPasswordMap.keySet())
+    {
+      String password = userToPasswordMap.get(userName);
+      
+      List<FileChunk> chunks = getChunks(1024*64);
+      System.out.printf("%d chunks\n", chunks.size());
+      {
+        //TODO
+        
+        time = time - System.currentTimeMillis();
+        
+        uploadChunks(
+            chunks.toArray(new FileChunk[0]),//final FileChunk[] chunks,
+            numThreads,
+            userName, 
+            password);
+        
+        time = time + System.currentTimeMillis();
+      }
+      
+      GetFileList getFileList = new GetFileList();
+      getFileList.setCredentials(getCredentials(userName,password));
+      
+      GetFileListResponse response = service.getFileList(getFileList);
+      
+      assertTrue(response.getFiles().length == 1);
+      com.buzzard.fileserver.File f = response.getFiles()[0];
+
+      //verify the chunk data
+      List<Byte> bytes = new ArrayList<Byte>();
+      for(long offset:f.getChunkOffsets())
+      {
+        DownloadFileChunk chunkArg = new DownloadFileChunk();
+        chunkArg.setCredentials(getCredentials(userName,password));
+        chunkArg.setFileName(testFile.getName());
+        chunkArg.setOffset(offset);
+        
+        DownloadFileChunkResponse chunkResponse = 
+            service.downloadFileChunk(chunkArg);
+        
+        InputStream chunkInput = 
+            chunkResponse.getChunk().getData().getInputStream();
+        
+        boolean stop = false;
+        while(!stop)
+        {
+          int nextByte = chunkInput.read();
+          
+          if(nextByte == -1)
+          {
+            stop = true;
+          }
+          else
+          {
+            bytes.add((byte)nextByte);
+          }
+        }
+      }
+      
+      assertEqual(getBytes(),bytes.toArray(new Byte[0]));
+      
+      DeleteFile deleteArg = new DeleteFile();
+      deleteArg.setCredentials(getCredentials(userName,password));
+      deleteArg.setFileName(testFile.getName());
+      
+      DeleteFileResponse deleteResponse = service.deleteFile(deleteArg);
+      assertTrue(deleteResponse.getWasSuccess());
+      
+      response = service.getFileList(getFileList);
+      assertTrue(response.getFiles().length == 0);
+    }
+    
+    deleteUsers();
+    
+    return time;
+  }
+  
+  
   private static void assertEqual(byte[] a1, Byte[] a2)
   {
     assertTrue(a1.length == a2.length);
@@ -297,7 +501,60 @@ public class TestServiceInterface extends TestCase
     return FileUtils.readFileToByteArray(testFile);
   }
   
-  private List<FileChunk> getChunks()
+  private List<FileChunk> getChunks(final int chunkSize) throws IOException
+  {
+    List<FileChunk> chunks = new ArrayList<FileChunk>();
+    byte[] bytes = getBytes();
+    
+    System.out.printf("retrieved %d bytes\n",bytes.length);
+    
+    int offset = 0;
+    boolean stop = false;
+    while(!stop)
+    {
+      int chunkLength = bytes.length - offset;
+      if(chunkLength > chunkSize)
+      {
+        chunkLength = chunkSize;
+      }
+      
+      if(chunkLength == 0)
+      {
+        stop = true;
+      }
+      else
+      {
+        byte[] data = new byte[chunkLength];
+        System.arraycopy(bytes, offset, data, 0, chunkLength);
+        
+        {
+          ByteArrayDataSource source = new ByteArrayDataSource(data);
+          DataHandler dataHandler = new DataHandler(source);
+          
+          FileChunk chunk = new FileChunk();
+          
+          chunk.setFileName(testFile.getName());
+          chunk.setOffset(offset);
+          chunk.setData(dataHandler);
+          chunks.add(chunk);
+        }
+        
+        System.out.printf("\t@%d : %d\n", offset,chunkLength);
+        
+        offset+=chunkLength;
+      }
+    }
+    
+    int numChunks = (int)Math.ceil((1.0d*bytes.length)/(1.0d*chunkSize));
+    
+    assertTrue(offset == bytes.length);
+    assertTrue(chunks.size() == numChunks);
+    assertTrue(numChunks > 1);
+    
+    return chunks;
+  }
+  
+  private List<FileChunk> getChunks()//TODO: return more than one chunk
   {
     FileDataSource dataSource = new FileDataSource(testFile);
     DataHandler dataHandler = new DataHandler(dataSource);
